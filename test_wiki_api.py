@@ -1,10 +1,13 @@
 import requests
 import urllib.parse
+import pandas as pd
+import os
+from datetime import datetime
+import sys
 
 def extract_title_from_url(url):
     """
     Extract Wikipedia article title from a full URL.
-    
     :param url: Full Wikipedia page URL
     :return: Decoded article title
     """
@@ -19,10 +22,9 @@ def extract_title_from_url(url):
     title = parsed_url.path.split('/wiki/')[1]
     return urllib.parse.unquote(title)
 
-def get_wikipedia_article_history(url, limit=50):
+def get_wikipedia_article_history(url, limit=500):
     """
     Retrieve the revision history of a Wikipedia article from a URL.
-    
     :param url: Full Wikipedia page URL
     :param limit: Maximum number of revisions to retrieve (default 50)
     :return: List of revision details
@@ -39,6 +41,7 @@ def get_wikipedia_article_history(url, limit=50):
         "format": "json",
         "prop": "revisions",
         "titles": article_title,
+        # "rvprop": "ids|timestamp|user|comment|size|tags|content",
         "rvprop": "ids|timestamp|user|comment|size|tags",
         "rvlimit": limit
     }
@@ -60,12 +63,14 @@ def get_wikipedia_article_history(url, limit=50):
         revisions = page['revisions']
         return [
             {
+                'url': url,
                 'rev_id': rev.get('revid', 'N/A'),
                 'timestamp': rev.get('timestamp', 'N/A'),
                 'user': rev.get('user', 'N/A'),
                 'comment': rev.get('comment', 'No comment'),
                 'size': rev.get('size', 0),
-                'tags': rev.get('tags', [])
+                'tags': ', '.join(rev.get('tags', [])) if rev.get('tags') else 'N/A',
+                # 'content': rev.get('*', 'Content not available')  # Use '*' to get content
             }
             for rev in revisions
         ]
@@ -77,41 +82,57 @@ def get_wikipedia_article_history(url, limit=50):
         print(f"Error parsing Wikipedia API response: {e}")
         return []
 
-def print_article_history(history):
+def save_history_to_csv(history, url):
     """
-    Print the article revision history in a readable format.
-    
+    Save the article revision history to a CSV file using pandas.
     :param history: List of revision details
+    :param url: Original Wikipedia URL
     """
     if not history:
-        print("No revision history to display.")
-        return
+        print("No history to save.")
+        return None
     
-    print(f"{'Revision ID':<15} {'Timestamp':<25} {'User':<20} {'Comment':<30} {'Size':<10} {'Tags'} {'Content'}")
-    print("-" * 110)
+    # Create a 'wikipedia_histories' directory if it doesn't exist
+    os.makedirs('wikipedia_histories', exist_ok=True)
     
-    for revision in history:
-        # Truncate tags to prevent overwhelming output
-        tags = ', '.join(revision['tags'][:3]) if revision['tags'] else 'N/A'
+    # Extract article title from the URL for filename
+    article_title = extract_title_from_url(url)
+    
+    # Generate a filename with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = ''.join(c if c.isalnum() or c in ['-', '_'] else '_' for c in article_title)
+    filename = f"wikipedia_histories/{safe_title}.csv"
+    
+    try:
+        # Convert to DataFrame
+        df = pd.DataFrame(history)
         
-        print(f"{str(revision['rev_id']):<15} "
-              f"{revision['timestamp']:<25} "
-              f"{revision['user'][:20]:<20} "
-              f"{revision['comment'][:30]:<30} "
-              f"{str(revision['size']):<10} "
-              f"{tags}")
+        # Save to CSV
+        df.to_csv(filename, index=False, encoding='utf-8')
+        
+        print(f"Revision history saved to {filename}")
+        return filename
+    
+    except Exception as e:
+        print(f"Error saving CSV file: {e}")
+        return None
 
 # Example usage
 if __name__ == "__main__":
     # Example Wikipedia URLs
-    example_urls = [
-        "https://en.wikipedia.org/wiki/Knapsack_problem"
-    ]
+    # example_urls = [
+    #     # "https://en.wikipedia.org/wiki/Knapsack_problem",
+    #     # "https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm"
+    #     "https://en.wikipedia.org/wiki/Dublin"
+    # ]
     
-    # Fetch and print history for each URL
-    for url in example_urls:
-        print(f"\nRevision History for: {url}")
-        history = get_wikipedia_article_history(url)
-        print_article_history(history)
-
+    # # Fetch and save history for each URL
+    # for url in example_urls:
+    url = sys.argv[1]
+    print(f"\nFetching Revision History for: {url}")
         
+        # Get article history
+    history = get_wikipedia_article_history(url)
+        
+        # Save history to CSV
+    save_history_to_csv(history, url)
