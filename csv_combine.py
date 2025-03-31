@@ -1,3 +1,4 @@
+# TODO: attempt to get state/province working
 import pandas as pd
 import os
 import re
@@ -20,7 +21,7 @@ def run_whois(ip):
     """
     try:
         # Run the whois command
-        result = subprocess.run(["whois", ip], capture_output=True, text=True, check=True)
+        result = subprocess.run(["whois", ip], capture_output=True, text=True)
         output = result.stdout
         
         # Parse output into a dictionary
