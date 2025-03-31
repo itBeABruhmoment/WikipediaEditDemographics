@@ -114,23 +114,6 @@ def process_and_save(file_name, df_per_page):
     # match ip addresses
     df["is_anon"] = df["user"].str.match(ipv4_match) | df["user"].str.match(ipv6_match)
 
-    # # article summary stats
-    # df_by_anon = df[["is_anon", "size_diff"]].copy()
-    # df_by_anon["size_diff"] = np.abs(df_by_anon["size_diff"])
-    # df_by_anon["amount"] = 1
-    # df_by_anon = df_by_anon.groupby(["is_anon"]).sum()
-
-    # per_page_summary = {
-    #     "url": df.iloc[0]["url"],
-    #     "num_contrib": df.shape[0],
-    #     "time_diff_avg": df["time_diff"].mean(),
-    #     "anon_num": df_by_anon.loc[True, "amount"],
-    #     "named_num":  df_by_anon.loc[False, "amount"],
-    #     "anon_contrib": df_by_anon.loc[True, "size_diff"],
-    #     "named_contrib": df_by_anon.loc[False, "size_diff"],
-    #     "anon_diff_avg": df_by_anon.loc[True, "size_diff"] / df_by_anon.loc[True, "amount"],
-    #     "named_diff_avg": df_by_anon.loc[False, "size_diff"] / df_by_anon.loc[False, "amount"],
-    # }
     # article summary stats
     df_by_anon = df[["is_anon", "size_diff"]].copy()
     df_by_anon["size_diff"] = np.abs(df_by_anon["size_diff"])
