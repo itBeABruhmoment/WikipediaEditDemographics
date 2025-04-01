@@ -23,7 +23,7 @@ def extract_title_from_url(url):
     title = parsed_url.path.split('/wiki/')[1]
     return urllib.parse.unquote(title)
 
-def get_wikipedia_article_history(url, limit=500):
+def get_wikipedia_article_history(url, limit=250):
     """
     Retrieve the revision history of a Wikipedia article from a URL.
     :param url: Full Wikipedia page URL
@@ -199,8 +199,8 @@ if __name__ == "__main__":
     # If arguments are provided, use them as the CSV file name and limit
     if len(sys.argv) > 1:
         csv_file = sys.argv[1]
-        limit = int(sys.argv[2]) if len(sys.argv) > 2 else 500
+        limit = int(sys.argv[2]) if len(sys.argv) > 2 else 250
         process_articles_from_csv(csv_file, limit)
     else:
         # Use default values
-        process_articles_from_csv("./articles/articles.csv", 500)
+        process_articles_from_csv("./articles/articles.csv", 250)
